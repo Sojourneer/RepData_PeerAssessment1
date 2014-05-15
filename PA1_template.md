@@ -21,12 +21,24 @@ The dataset is stored in a comma-separated-value (CSV) file and there are a tota
 
 
 ## Reading in the data
-```{r load-data}
-rawdata <- read.csv('project/data/activity.csv')
+
+```r
+rawdata <- read.csv("project/data/activity.csv")
 rawdata$date = as.Date(rawdata$date)
 
 head(rawdata)
 ```
+
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+## 4    NA 2012-10-01       15
+## 5    NA 2012-10-01       20
+## 6    NA 2012-10-01       25
+```
+
 
 # Assignment questions
 
@@ -34,125 +46,166 @@ head(rawdata)
 
 For this question, missing values are ignored (as per assignment instructions).
 
-```{r}
+
+```r
 library(plyr)
-byDay <- ddply(rawdata, .(date), summarize,
-               sum=sum(steps,na.rm=T),mean=mean(steps,na.rm=T),
-               median=median(steps,na.rm=T), count=length(steps),
-               nonZero=sum(steps != 0), zero=sum(steps == 0),
-               na=sum(is.na(steps)))
+byDay <- ddply(rawdata, .(date), summarize, sum = sum(steps, na.rm = T), mean = mean(steps, 
+    na.rm = T), median = median(steps, na.rm = T), count = length(steps), nonZero = sum(steps != 
+    0), zero = sum(steps == 0), na = sum(is.na(steps)))
 
 mean(byDay$sum)
+```
+
+```
+## [1] 9354
+```
+
+```r
 median(byDay$sum)
-
 ```
 
-```{r fig.width=7, fig.height=6}
+```
+## [1] 10395
+```
+
+
+
+```r
 hist(byDay$sum)
-
 ```
+
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
+
 
 
 ## Q2: What is the average daily activity pattern?
 1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
-```{r}
-byInterval <- ddply(rawdata, .(interval), summarize,
-                    sum=sum(steps,na.rm=T),mean=mean(steps,na.rm=T), median=median(steps,na.rm=T),
-                    count=length(steps), nonZero=sum(!is.na(steps) & steps != 0),
-                    zero=sum(steps == 0), na=sum(is.na(steps)))
-tMax <- byInterval[which.max(byInterval$mean),1]
+
+```r
+byInterval <- ddply(rawdata, .(interval), summarize, sum = sum(steps, na.rm = T), 
+    mean = mean(steps, na.rm = T), median = median(steps, na.rm = T), count = length(steps), 
+    nonZero = sum(!is.na(steps) & steps != 0), zero = sum(steps == 0), na = sum(is.na(steps)))
+tMax <- byInterval[which.max(byInterval$mean), 1]
 
 tMax
 ```
 
+```
+## [1] 835
+```
+
+
 Here is a plot showing the average steps across days, with a vertical line marking the maximum.
 
-```{r fig.width=7, fig.height=6}
-plot(byInterval$interval, byInterval$mean, type="l",
-    main="Mean steps by interval, averaged across days",
-    xlab="interval",
-    ylab="Mean steps"
-)
-lines(c(tMax,tMax),c(0,max(byInterval$mean)), type="l", col="red")
-text(tMax, max(byInterval$mean),
-     labels=c(
-       sprintf("max (%d, %.1f)", tMax, round(max(byInterval$mean)),1)
-     )
-)
 
+```r
+plot(byInterval$interval, byInterval$mean, type = "l", main = "Mean steps by interval, averaged across days", 
+    xlab = "interval", ylab = "Mean steps")
+lines(c(tMax, tMax), c(0, max(byInterval$mean)), type = "l", col = "red")
+text(tMax, max(byInterval$mean), labels = c(sprintf("max (%d, %.1f)", tMax, 
+    round(max(byInterval$mean)), 1)))
 ```
+
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
+
 
 
 ## Q3: Imputing missing values
 
 
 
-```{r}
+
+```r
 # missing values
 sum(is.na(rawdata$steps))
 ```
 
+```
+## [1] 2304
+```
+
+
 
 By looking at the data, we see that most days have no missing data, and the rest have no data.
-```{r fig.width=7, fig.height=6}
-with(byDay,plot(date, na))
 
+```r
+with(byDay, plot(date, na))
 ```
+
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
+
 
 As we don't have a better idea, a reasonable estimation for each missing interval's data is the mean for that interval.
-```{r}
+
+```r
 processedData <- data.frame(rawdata)
 
-for(i  in 1:nrow(byInterval)) {
-  processedData$steps[is.na(processedData$steps) & processedData$interval == byInterval$interval[i]] = byInterval$mean[i]
+for (i in 1:nrow(byInterval)) {
+    processedData$steps[is.na(processedData$steps) & processedData$interval == 
+        byInterval$interval[i]] = byInterval$mean[i]
 }
-
 ```
+
 
 After the imputation, the mean and median are higher, and equal to one another. The histogram shows a smoother distribution.
 
-```{r}
-byDay2 <- ddply(processedData, .(date), summarize,
-               sum=sum(steps,na.rm=T),mean=mean(steps,na.rm=T),
-               median=median(steps,na.rm=T), count=length(steps),
-               nonZero=sum(steps != 0), zero=sum(steps == 0),
-               na=sum(is.na(steps)))
+
+```r
+byDay2 <- ddply(processedData, .(date), summarize, sum = sum(steps, na.rm = T), 
+    mean = mean(steps, na.rm = T), median = median(steps, na.rm = T), count = length(steps), 
+    nonZero = sum(steps != 0), zero = sum(steps == 0), na = sum(is.na(steps)))
 
 mean(byDay2$sum)
+```
+
+```
+## [1] 10766
+```
+
+```r
 median(byDay2$sum)
+```
 
+```
+## [1] 10766
 ```
 
 
-```{r fig.width=7, fig.height=6}
+
+
+```r
 hist(byDay2$sum)
-
 ```
+
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9.png) 
+
 
 
 ## Q4: Are there differences in activity patterns between weekdays and weekends?
 
 
-```{r}
-processedData$daytype = as.factor( ifelse(weekdays(processedData$date) %in% c("Saturday","Sunday"), "weekend","weekday"))
-byInterval2 <- ddply(processedData, .(daytype,interval), summarize,
-                    sum=sum(steps), mean=mean(steps), median=median(steps)
-                    )
-#tMax <- byInterval[which.max(byInterval$mean),1]
-#tMax
 
+```r
+processedData$daytype = as.factor(ifelse(weekdays(processedData$date) %in% c("Saturday", 
+    "Sunday"), "weekend", "weekday"))
+byInterval2 <- ddply(processedData, .(daytype, interval), summarize, sum = sum(steps), 
+    mean = mean(steps), median = median(steps))
+# tMax <- byInterval[which.max(byInterval$mean),1] tMax
 ```
+
 
 By plotting the mean steps per interval separately for weekends and weekdays, it appears that the number of steps is spread more evenly on the weekends.
 
-```{r fig.width=7, fig.height=6}
+
+```r
 library(lattice)
-xyplot(mean ~ interval | daytype, data=byInterval2, type="l", layout=c(1,2),
-    main="Mean steps by interval, averaged across days",
-    xlab="interval",
-    ylab="Mean steps"
-   )
+xyplot(mean ~ interval | daytype, data = byInterval2, type = "l", layout = c(1, 
+    2), main = "Mean steps by interval, averaged across days", xlab = "interval", 
+    ylab = "Mean steps")
 ```
+
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11.png) 
+
 
