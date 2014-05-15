@@ -50,8 +50,8 @@ For this question, missing values are ignored (as per assignment instructions).
 ```r
 library(plyr)
 byDay <- ddply(rawdata, .(date), summarize, sum = sum(steps, na.rm = T), mean = mean(steps, 
-    na.rm = T), median = median(steps, na.rm = T), count = length(steps), nonZero = sum(steps != 
-    0), zero = sum(steps == 0), na = sum(is.na(steps)))
+    na.rm = T), median = median(steps, na.rm = T), count = length(steps), nonZero = sum(!is.na(steps) & 
+    steps != 0), zero = sum(!is.na(steps) & steps == 0), na = sum(is.na(steps)))
 
 mean(byDay$sum)
 ```
@@ -71,7 +71,7 @@ median(byDay$sum)
 
 
 ```r
-hist(byDay$sum)
+hist(byDay$sum, main = "Distribution of the number of steps per day", xlab = "Number of steps")
 ```
 
 ![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
@@ -101,8 +101,8 @@ Here is a plot showing the average steps across days, with a vertical line marki
 
 
 ```r
-plot(byInterval$interval, byInterval$mean, type = "l", main = "Mean steps by interval, averaged across days", 
-    xlab = "interval", ylab = "Mean steps")
+plot(byInterval$interval, byInterval$mean, type = "l", main = "Mean number of steps by interval, averaged across days", 
+    xlab = "interval", ylab = "Mean number of steps")
 lines(c(tMax, tMax), c(0, max(byInterval$mean)), type = "l", col = "red")
 text(tMax, max(byInterval$mean), labels = c(sprintf("max (%d, %.1f)", tMax, 
     round(max(byInterval$mean)), 1)))
@@ -131,13 +131,13 @@ sum(is.na(rawdata$steps))
 By looking at the data, we see that most days have no missing data, and the rest have no data.
 
 ```r
-with(byDay, plot(date, na))
+with(byDay, plot(date, na, ylab = "Number of missing data points"), main = "Missing data points per day")
 ```
 
 ![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
 
 
-As we don't have a better idea, a reasonable estimation for each missing interval's data is the mean for that interval.
+Without other knowledge, a reasonable estimation for each missing interval's data is the mean for that interval.
 
 ```r
 processedData <- data.frame(rawdata)
@@ -176,7 +176,8 @@ median(byDay2$sum)
 
 
 ```r
-hist(byDay2$sum)
+hist(byDay2$sum, main = "Distribution of the number of steps per day (with imputed data)", 
+    xlab = "Number of steps")
 ```
 
 ![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9.png) 
@@ -192,7 +193,6 @@ processedData$daytype = as.factor(ifelse(weekdays(processedData$date) %in% c("Sa
     "Sunday"), "weekend", "weekday"))
 byInterval2 <- ddply(processedData, .(daytype, interval), summarize, sum = sum(steps), 
     mean = mean(steps), median = median(steps))
-# tMax <- byInterval[which.max(byInterval$mean),1] tMax
 ```
 
 
@@ -202,8 +202,8 @@ By plotting the mean steps per interval separately for weekends and weekdays, it
 ```r
 library(lattice)
 xyplot(mean ~ interval | daytype, data = byInterval2, type = "l", layout = c(1, 
-    2), main = "Mean steps by interval, averaged across days", xlab = "interval", 
-    ylab = "Mean steps")
+    2), main = "Mean steps by interval, averaged across days (with imputed data)", 
+    xlab = "interval", ylab = "Mean steps")
 ```
 
 ![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11.png) 
